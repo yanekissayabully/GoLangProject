@@ -103,26 +103,6 @@ DriveBai is a backend-first platform that connects car owners with drivers. It p
 
 ---
 
-## 🤝 Collaboration Workflow
-
-- **GitHub Flow**: feature branches → PR → review → merge  
-- **Kanban board**: To Do / In Progress / Review / Done  
-- **Definition of Done**: tests pass + Swagger updated + reviewer approved
-
----
-
-## 🗓️ Milestones
-
-### ✅ Milestone 1
-Finalize auth/onboarding + cars CRUD + migrations stable
-
-### 🔄 Milestone 2
-Chat/requests polish + file uploads + swagger coverage
-
-### 🚀 Milestone 3
-Tests for critical flows + dockerized demo + deployment
-
----
 
 ## ⚠️ Risks & Mitigations
 
