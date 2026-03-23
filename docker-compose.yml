@@ -1,0 +1,120 @@
+version: '3.8'
+
+services:
+  # база данных
+  postgres:
+    image: postgres:15-alpine
+    container_name: go-postgres
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: ${DB_NAME:-carsharing}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Go прилка
+  app:
+    build: .
+    container_name: go-app
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      DB_NAME: ${DB_NAME:-carsharing}
+      DB_SSLMODE: disable
+      
+      # App config
+      APP_ENV: ${APP_ENV:-production}
+      APP_PORT: 8080
+      
+      # JWT
+      JWT_SECRET: ${JWT_SECRET}
+      
+      # Email
+      MAILERSEND_API_KEY: ${MAILERSEND_API_KEY}
+      MAILERSEND_FROM_EMAIL: ${MAILERSEND_FROM_EMAIL}
+      MAILERSEND_FROM_NAME: ${MAILERSEND_FROM_NAME}
+      
+      # Stripe
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      
+      # Frontend URL (ну если будет)
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      
+      TZ: UTC
+    volumes:
+      # Для загрузки файлов
+      - uploads-data:/app/uploads
+      # если нужен будет (hot-reload)
+      # - .:/app
+      # - /app/bin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # Опционально когда миграции запускаются отдельно
+  migrations:
+    build: .
+    container_name: go-migrations
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Waiting for postgres..."
+        sleep 5
+        echo "Running migrations..."
+        # Здесь нужно запустить вашу миграцию
+        # Если вы используете migrate, то:
+        # apk add --no-cache curl
+        # curl -L https://github.com/golang-migrate/migrate/releases/download/v4.17.0/migrate.linux-amd64.tar.gz | tar xvz
+        # ./migrate -path /app/migrations -database "postgresql://$$DB_USER:$$DB_PASSWORD@postgres:5432/$$DB_NAME?sslmode=disable" up
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      DB_NAME: ${DB_NAME:-carsharing}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app-network
+    restart: "no"
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: go-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - app-network
+    profiles:
+      - dev
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  uploads-data:
