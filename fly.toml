@@ -1,7 +1,6 @@
 # fly.toml app configuration file generated for drivebai-api on 2026-02-09T13:19:29+05:00
-#
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
-#
+
 
 app = 'drivebai-api-team'
 primary_region = 'ewr'
